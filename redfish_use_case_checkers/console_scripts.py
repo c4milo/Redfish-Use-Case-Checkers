@@ -22,6 +22,7 @@ from pathlib import Path
 from redfish_use_case_checkers.system_under_test import SystemUnderTest
 from redfish_use_case_checkers import account_management
 from redfish_use_case_checkers import boot_override
+from redfish_use_case_checkers import chassis_power_control
 from redfish_use_case_checkers import logger
 from redfish_use_case_checkers import manager_ethernet_interfaces
 from redfish_use_case_checkers import power_control
@@ -57,7 +58,14 @@ def main():
     argget.add_argument(
         "--test-list",
         nargs="*",
-        choices=["AccountManagement", "PowerControl", "BootOverride", "ManagerEthernetInterfaces", "QueryParameters"],
+        choices=[
+            "AccountManagement",
+            "PowerControl",
+            "ChassisPowerControl",
+            "BootOverride",
+            "ManagerEthernetInterfaces",
+            "QueryParameters",
+        ],
         help="Selects specific tests to perform instead of running the entire test suite.",
     )
     argget.add_argument(
@@ -97,6 +105,8 @@ def main():
         account_management.use_cases(sut)
     if args.test_list is None or "PowerControl" in args.test_list:
         power_control.use_cases(sut)
+    if args.test_list is None or "ChassisPowerControl" in args.test_list:
+        chassis_power_control.use_cases(sut)
     if args.test_list is None or "BootOverride" in args.test_list:
         boot_override.use_cases(sut)
     if args.test_list is None or "ManagerEthernetInterfaces" in args.test_list:
@@ -154,14 +164,20 @@ def print_summary(sut):
 
     col_w = 14
     sep = "+" + ("-" * col_w + "+") * 4
-    header = "| {:^{w}} | {:^{w}} | {:^{w}} | {:^{w}} |".format(
-        "PASS", "WARN", "FAIL", "NOT TESTED", w=col_w - 2
-    )
+    header = "| {:^{w}} | {:^{w}} | {:^{w}} | {:^{w}} |".format("PASS", "WARN", "FAIL", "NOT TESTED", w=col_w - 2)
     values = "| {}{:^{w}}{} | {}{:^{w}}{} | {}{:^{w}}{} | {}{:^{w}}{} |".format(
-        pass_start, str(passed), pass_end,
-        warn_start, str(warned), warn_end,
-        fail_start, str(failed), fail_end,
-        no_test_start, str(not_tested), no_test_end,
+        pass_start,
+        str(passed),
+        pass_end,
+        warn_start,
+        str(warned),
+        warn_end,
+        fail_start,
+        str(failed),
+        fail_end,
+        no_test_start,
+        str(not_tested),
+        no_test_end,
         w=col_w - 2,
     )
     print()

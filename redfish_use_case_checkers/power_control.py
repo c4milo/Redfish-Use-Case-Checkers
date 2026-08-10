@@ -18,6 +18,7 @@ import time
 
 from redfish_use_case_checkers.system_under_test import SystemUnderTest
 from redfish_use_case_checkers import logger
+from redfish_use_case_checkers.chassis_power_control import add_sampled_states_result
 
 CAT_NAME = "Power Control"
 TEST_SYSTEM_COUNT = (
@@ -284,11 +285,13 @@ def power_test_reset_operation(sut: SystemUnderTest, systems: list, reset_capabi
             expected_power_state = "On"
             if reset_type == "ForceOff":
                 expected_power_state = "Off"
+            sampled_states = []
             try:
                 # Poll the power state for up to 50 seconds
                 for i in range(0, 10):
                     logger.logger.debug("Monitoring check {}".format(i))
                     system_info = redfish_utilities.get_system(sut.session, system["Id"])
+                    sampled_states.append(system_info.dict.get("Status", {}).get("State"))
                     if system_info.dict["PowerState"] == expected_power_state:
                         break
                     time.sleep(5)
@@ -311,6 +314,9 @@ def power_test_reset_operation(sut: SystemUnderTest, systems: list, reset_capabi
                     )
                 else:
                     sut.add_test_result(CAT_NAME, test_name, operation, "PASS")
+
+                # Verify every sampled state is Redfish vocabulary
+                add_sampled_states_result(sut, CAT_NAME, test_name, "System", system["Id"], reset_type, sampled_states)
             except Exception as err:
                 sut.add_test_result(
                     CAT_NAME,
